@@ -1,0 +1,30 @@
+{
+  "name": "akkeris-detectify",
+  "version": "1.0.0",
+  "description": "Scan Akkeris apps with Detectify and report release statuses",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"ngrok http -subdomain=metroid 9000\" \"npm start\" \"npm run worker\"",
+    "start": "node index.js",
+    "worker": "node worker.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "repository": "https://github.com/octanner/akkeris-detectify",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.612.0",
+    "axios": "^0.19.2",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "json-formatter-js": "^2.3.3",
+    "pg": "^7.18.1",
+    "pug": "^2.0.4",
+    "uuid": "^3.4.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.20.0"
+  }
+}

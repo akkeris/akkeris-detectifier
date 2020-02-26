@@ -1,0 +1,47 @@
+html
+  head
+    title= title
+    meta(name='profile-id' content= profileID)
+    meta(name='report-filename' content= reportFilename)
+    script(src='/reportDetails.js')
+    script(src='/json-formatter.umd.js')
+    link(rel="stylesheet", href="/reportDetails.css")
+    link(rel="stylesheet", href="/loadAwesomePacman.css")
+    link(rel='shortcut icon', type='image/png', href= favicon)
+  body
+    div(class='header text-center')
+      h1 Akkeris Detectify Scanner
+    div(class='container')
+      h3(class='report-title') Report Details for #{endpoint}
+      div(class='details-container')
+        div(class='details-item')
+          h4 Date Ran
+          p #{createdAt}
+        div(class='details-item')
+          h4 Akkeris App
+          p
+            a(href=appURL, target='_blank') #{appName}
+        div(class='details-item')
+          h4 Akkeris Release
+          p
+            a(href=releaseURL, target='_blank') #{releaseID}
+        div(class='details-item')
+          h4 Scan Status
+          p #{scanStatus}
+      div(class='report-container')
+        h4 Full Report
+        if reportFilename && reportFilename !== ''
+          div(class='button-container')
+            button(id='download-button', class='btn btn-primary btn-sm', onClick='downloadReport()') Download
+            button(id='view-button', class='btn btn-primary btn-sm', onClick='render()') Toggle JSON Viewer
+          div(id='json-viewer')
+          div(class='la-pacman la-2x', id='pacman-loader')
+            div
+            div
+            div
+            div
+            div
+            div
+        else
+          p No report available 🙁
+    a(id='downloadAnchorElem', style='display:none')

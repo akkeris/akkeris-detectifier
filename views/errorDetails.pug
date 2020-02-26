@@ -1,0 +1,12 @@
+html
+  head
+    title= title
+    link(rel='shortcut icon', type='image/png', href='/failure_lg.png')
+    style
+      include errorDetails.css
+  body
+    div(class='header text-center')
+      h1 Akkeris Detectify Scanner
+    div(class='container')
+      h3 Error Details
+      p= errorDescription
