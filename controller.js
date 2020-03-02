@@ -244,7 +244,7 @@ async function renderDetails(req, res) {
 async function renderScans(req, res) {
   let pendingScans;
   try {
-    pendingScans = await db.getPendingProfiles();
+    pendingScans = await db.getRunningScans();
   } catch (err) {
     console.log(err);
     res.sendStatus(500);
@@ -263,7 +263,7 @@ async function renderScans(req, res) {
 async function getScans(req, res) {
   let pendingScans;
   try {
-    pendingScans = await db.getPendingProfiles();
+    pendingScans = await db.getRunningScans();
   } catch (err) {
     console.log(err);
     res.sendStatus(500);

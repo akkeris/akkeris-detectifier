@@ -153,6 +153,33 @@ async function getPendingProfiles() {
   return query(queryStatement);
 }
 
+async function getRunningScans() {
+  const queryStatement = `
+      select
+        scan_profiles.scan_profile,
+        scan_profiles.name,
+        scan_profiles.endpoint,
+        scan_profiles.scan_status,
+        scan_profiles.created_at,
+        releases.release,
+        releases.app_name,
+        releases.status_id
+      from scan_profiles
+        inner join releases on releases.release = scan_profiles.release
+      where (scan_profiles.deleted = false and releases.deleted = false) 
+        and (scan_profiles.scan_status = 'starting' or
+            scan_profiles.scan_status = 'running' or
+            scan_profiles.scan_status = 'stopping' or
+            scan_profiles.scan_status = 'success' or
+            scan_profiles.scan_status = 'fail' or
+            scan_profiles.scan_status = 'error' or
+            scan_profiles.scan_status = 'profile_created')
+      order by
+        scan_profiles.created_at desc;
+    `;
+  return query(queryStatement);
+}
+
 
 module.exports = {
   storeRelease,
@@ -166,4 +193,5 @@ module.exports = {
   init,
   getPendingProfiles,
   getScanProfile,
+  getRunningScans,
 };
