@@ -25,11 +25,16 @@ app.get('/v1/profiles/:profileID', controller.getProfile);
 // Endpoint for retrieval of reports stored in S3
 app.get('/v1/reports/:profileID', controller.getReport);
 
+// Endpoint for retrieval of running scans
+app.get('/v1/scans', controller.getScans);
+
 // Endpoint to give the user more detailed information on errors
 app.get('/errors/:errorID', controller.renderError);
 
+// Endpoint to give the user more detailed information on a finished scan
 app.get('/reports/:profileID', controller.renderDetails);
 
+// Endpoint to give the user more detailed information on currently running scans
 app.get('/', controller.renderScans);
 
 app.use(express.static('public'));

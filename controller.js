@@ -258,6 +258,19 @@ async function renderScans(req, res) {
   });
 }
 
+// Return list of currently running scans
+async function getScans(req, res) {
+  let pendingScans;
+  try {
+    pendingScans = await db.getPendingProfiles();
+  } catch (err) {
+    res.sendStatus(500);
+    return;
+  }
+  pendingScans.sort((a, b) => b.created_at - a.created_at);
+  res.status(200).send(pendingScans);
+}
+
 module.exports = {
   setupDetectifyScan,
   getProfile,
@@ -265,4 +278,5 @@ module.exports = {
   renderError,
   renderDetails,
   renderScans,
+  getScans,
 };
