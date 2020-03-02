@@ -2,26 +2,9 @@
 
 const pg = require('pg');
 const url = require('url');
+const fs = require('fs');
 
 let pgPool;
-
-function init() {
-  const dbURL = new url.URL(process.env.DATABASE_URL);
-  const dbConfig = {
-    user: dbURL.username ? dbURL.username : '',
-    password: dbURL.password ? dbURL.password : '',
-    host: dbURL.hostname,
-    database: dbURL.pathname.replace(/^\//, ''),
-    port: dbURL.port,
-    max: 10,
-    idleTimeoutMillis: 30000,
-    ssl: false,
-  };
-
-  pgPool = new pg.Pool(dbConfig);
-  pgPool.on('error', (err) => { console.error('Postgres Pool Error: ', err); });
-}
-
 
 async function query(queryStatement, ...parameters) {
   parameters = parameters.map((x) => {
@@ -41,6 +24,29 @@ async function query(queryStatement, ...parameters) {
   return finalResult;
 }
 
+function init() {
+  const dbURL = new url.URL(process.env.DATABASE_URL);
+  const dbConfig = {
+    user: dbURL.username ? dbURL.username : '',
+    password: dbURL.password ? dbURL.password : '',
+    host: dbURL.hostname,
+    database: dbURL.pathname.replace(/^\//, ''),
+    port: dbURL.port,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    ssl: false,
+  };
+
+  pgPool = new pg.Pool(dbConfig);
+  pgPool.on('error', (err) => { console.error('Postgres Pool Error: ', err); });
+  try {
+    query(fs.readFileSync('./create.sql').toString('utf8'));
+  } catch (err) {
+    console.log('Error running database migration!');
+    console.log(err);
+    process.exit(1);
+  }
+}
 
 async function storeRelease(payload, statusID, akkerisToken) {
   const queryStatement = 'insert into releases (release, app_name, status_id, token, payload) values ($1, $2, $3, $4, $5) returning *';
