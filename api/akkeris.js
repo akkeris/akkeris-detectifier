@@ -54,7 +54,7 @@ async function updateReleaseStatusWithError(token, appname, releaseID, statusID,
     state: 'error',
     name: 'Detectify',
     description: `Scan failed - ${errorType}`,
-    target_url: `${CALLBACK_URL}/v1/errors/${errorID}`,
+    target_url: `${CALLBACK_URL}/errors/${errorID}`,
     image_url: `${CALLBACK_URL}/failure.png`,
   }, config);
 }

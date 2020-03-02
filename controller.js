@@ -151,14 +151,14 @@ async function renderError(req, res) {
  * Retrieve given scan profile
  */
 async function getProfile(req, res) {
-  if (!req.params || req.params.length > 0) {
+  if (!req.params.profileID) {
     res.sendStatus(404);
     return;
   }
 
   let scanProfile;
   try {
-    scanProfile = await db.getScanProfile(req.params[0]);
+    scanProfile = await db.getScanProfile(req.params.profileID);
   } catch (err) {
     res.sendStatus(404);
     return;
@@ -171,20 +171,20 @@ async function getProfile(req, res) {
  * Retrieve report for a given scan profile
  */
 async function getReport(req, res) {
-  if (!req.params || req.params.length > 0) {
+  if (!req.params.profileID) {
     res.sendStatus(404);
     return;
   }
 
   let scanProfile;
   try {
-    scanProfile = await db.getScanProfile(req.params[0]);
+    scanProfile = await db.getScanProfile(req.params.profileID);
   } catch (err) {
     res.sendStatus(404);
     return;
   }
 
-  if (scanProfile.report_filename && scanProfile.report_filename !== '') {
+  if (scanProfile && scanProfile.report_filename && scanProfile.report_filename !== '') {
     try {
       res.status(200).send(JSON.parse((await s3.getObject(scanProfile.report_filename)).Body));
     } catch (err) {
@@ -197,14 +197,14 @@ async function getReport(req, res) {
 }
 
 async function renderDetails(req, res) {
-  if (!req.params || req.params.length > 0) {
+  if (!req.params.profileID) {
     res.sendStatus(404);
     return;
   }
 
   let profile;
   try {
-    profile = await db.getScanProfile(req.params[0]);
+    profile = await db.getScanProfile(req.params.profileID);
   } catch (err) {
     res.sendStatus(404);
     return;
@@ -241,10 +241,28 @@ async function renderDetails(req, res) {
   });
 }
 
+async function renderScans(req, res) {
+  let pendingScans;
+  try {
+    pendingScans = await db.getPendingProfiles();
+  } catch (err) {
+    res.sendStatus(500);
+    return;
+  }
+
+  pendingScans.sort((a, b) => b.created_at - a.created_at);
+
+  res.render('runningScans', {
+    scans: pendingScans,
+    uiEndpoint: process.env.AKKERIS_UI,
+  });
+}
+
 module.exports = {
   setupDetectifyScan,
   getProfile,
   getReport,
   renderError,
   renderDetails,
+  renderScans,
 };

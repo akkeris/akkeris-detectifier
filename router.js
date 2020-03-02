@@ -19,16 +19,18 @@ app.use(bodyParser.json());
 // Endpoint for Akkeris "released" events
 app.post('/v1/hook/released', controller.setupDetectifyScan);
 
-// Endpoint to give the user more detailed information on errors
-app.get('/v1/errors/:errorID', controller.renderError);
-
 // Endpoint for retrieval of profiles
-app.get('/v1/profiles/*', controller.getProfile);
+app.get('/v1/profiles/:profileID', controller.getProfile);
 
 // Endpoint for retrieval of reports stored in S3
-app.get('/v1/reports/*', controller.getReport);
+app.get('/v1/reports/:profileID', controller.getReport);
 
-app.get('/reports/*', controller.renderDetails);
+// Endpoint to give the user more detailed information on errors
+app.get('/errors/:errorID', controller.renderError);
+
+app.get('/reports/:profileID', controller.renderDetails);
+
+app.get('/', controller.renderScans);
 
 app.use(express.static('public'));
 

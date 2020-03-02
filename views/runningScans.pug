@@ -1,0 +1,29 @@
+html
+  head
+    title Akkeris Detectifier
+    style
+      include runningScans.css
+  body
+    div(class='header text-center')
+      h1 Akkeris Detectifier
+    div(class='container')
+      h3 Running Scans
+      div(class='scan-container')
+        div(class='scan-item')
+          h4 App Name
+          each scan in scans
+            p
+              a(href=`${uiEndpoint}/apps/${scan.app_name}/info`, target='_blank') #{scan.app_name}
+        div(class='scan-item')
+          h4 Endpoint
+          each scan in scans
+            p 
+              a(href=`https://${scan.endpoint}`, target='_blank') #{scan.endpoint}
+        div(class='scan-item')
+          h4 Started At
+          each scan in scans
+            p= new Date(scan.created_at).toLocaleString()
+        div(class='scan-item')
+          h4 Current Status
+          each scan in scans
+            p #{scan.scan_status}
