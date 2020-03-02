@@ -227,7 +227,7 @@ async function renderDetails(req, res) {
 
   res.render('reportDetails', {
     title: 'Detectify Scan Report',
-    profileID: req.params[0],
+    profileID: req.params.profileID,
     profileName: profile.name,
     endpoint: profile.endpoint,
     appName: profile.app_name,
