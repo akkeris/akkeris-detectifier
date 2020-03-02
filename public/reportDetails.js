@@ -3,7 +3,6 @@
 let fullReport;
 const profileID = document.getElementsByName('profile-id')[0].content;
 const reportFilename = document.getElementsByName('report-filename')[0].content;
-console.log(reportFilename);
 
 async function fetchReport() {
   return (await fetch(`/v1/reports/${profileID}`)).json();
