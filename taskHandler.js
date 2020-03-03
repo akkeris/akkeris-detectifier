@@ -11,7 +11,7 @@ const timeoutMinutes = Number.isInteger(Number.parseInt(process.env.TIMEOUT_MINU
 // Possible error statuses from Detectify
 const errorStatuses = ['unable_to_resolve', 'unable_to_complete'];
 
-const timeoutMessage = `The Detectify scan took longer than ${timeoutMinutes.toString()} to complete.`;
+const timeoutMessage = `The Detectify scan took longer than ${timeoutMinutes.toString()} minutes to complete.`;
 
 const CALLBACK_URL = process.env.CALLBACK_URL ? (
   /^https?:\/\/.+$/.test(process.env.CALLBACK_URL) ? process.env.CALLBACK_URL : `https://${process.env.CALLBACK_URL}`
