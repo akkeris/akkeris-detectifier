@@ -23,6 +23,12 @@ In addition, a Postgres database and an S3 bucket are required. The following en
 | S3_LOCATION       | S3 bucket endpoint                |
 | S3_REGION         | S3 bucket region                  |
 
+## Optional Environment Variables
+
+| Variable        | Description                                                                 |
+| --------------- | --------------------------------------------------------------------------- |
+| TIMEOUT_MINUTES | How many minutes before a scan is considered to have timed out (default 50) |
+
 ## Installation
 
 Two instances of this application are necessary for full operation - the main HTTP server, and a worker process. 

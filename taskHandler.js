@@ -5,7 +5,8 @@ const detectify = require('./api/detectify');
 const s3 = require('./api/s3');
 
 // How many minutes a scan should run before it is considered timed out
-const timeoutMinutes = 50;
+const timeoutMinutes = Number.isInteger(Number.parseInt(process.env.TIMEOUT_MINUTES, 10))
+  ? Number.parseInt(process.env.TIMEOUT_MINUTES, 10) : 50;
 
 // Possible error statuses from Detectify
 const errorStatuses = ['unable_to_resolve', 'unable_to_complete'];
