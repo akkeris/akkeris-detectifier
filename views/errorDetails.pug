@@ -2,6 +2,7 @@ html
   head
     title= title
     link(rel='shortcut icon', type='image/png', href='/failure_lg.png')
+    script(src='/processDate.js')
     style
       include styles.css
   body
@@ -10,3 +11,18 @@ html
     div(class='container')
       h3 Error Details
       p= errorDescription
+      div(class='details-container')
+        div(class='details-item')
+          h4 Date Ran
+          p(class='date-item') #{createdAt}
+        div(class='details-item')
+          h4 Akkeris App
+          p
+            a(href=appURL, target='_blank') #{appName}
+        div(class='details-item')
+          h4 Akkeris Release
+          p
+            a(href=releaseURL, target='_blank') #{releaseID}
+        div(class='details-item')
+          h4 Scan Status
+          p #{scanStatus}

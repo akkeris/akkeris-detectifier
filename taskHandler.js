@@ -42,7 +42,7 @@ async function deleteProfile(profile) {
 async function reportError(profile, errorMessage, errorType) {
   try {
     const errorID = uuid();
-    await db.storeError(errorID, errorMessage, profile.release, profile.scan_profile_token);
+    await db.storeError(errorID, errorMessage, profile.release, profile.scan_profile);
     await akkeris.updateReleaseStatusWithError(profile.token, profile.app_name, profile.release, profile.status_id, errorID, errorType);
   } catch (err) {
     console.log(`ERROR: Unable to report "${errorType}" error to Akkeris`);

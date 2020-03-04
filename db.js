@@ -112,7 +112,25 @@ async function storeError(errorID, description, releaseID, scanProfileID) {
 }
 
 async function getError(errorID) {
-  return (await query('select error, description, release, scan_profile, created_at from errors where error = $1', errorID))[0];
+  const queryStatement = `
+    select
+      errors.error as error,
+      errors.description as description,
+      errors.release as release,
+      errors.scan_profile as scan_profile,
+      errors.created_at as error_created_at,
+      scan_profiles.name,
+      scan_profiles.endpoint,
+      scan_profiles.scan_status,
+      scan_profiles.created_at as scan_profile_created_at,
+      releases.app_name,
+      releases.status_id
+    from errors
+      inner join scan_profiles on errors.scan_profile = scan_profiles.scan_profile
+      inner join releases on errors.release = releases.release
+    where errors.error = $1;
+  `;
+  return (await query(queryStatement, errorID))[0];
 }
 
 async function getPendingProfiles() {

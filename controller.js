@@ -131,20 +131,30 @@ async function setupDetectifyScan(req, res) {
  * Retrieve error details from DB and display it as HTML
  */
 async function renderError(req, res) {
-  let errorDescription;
+  let error;
 
   if (!req.params.errorID || !isUUID.test(req.params.errorID)) {
-    errorDescription = 'Invalid errorID!';
-  } else {
-    try {
-      const error = await db.getError(req.params.errorID);
-      errorDescription = error.description;
-    } catch (err) {
-      errorDescription = 'Requested error details not found';
-    }
+    res.render('errorDetails', { title: 'Detectify Error Details', errorDescription: 'Invalid errorID!' });
+    return;
   }
 
-  res.render('errorDetails', { title: 'Detectify Error Details', errorDescription });
+  try {
+    error = await db.getError(req.params.errorID);
+  } catch (err) {
+    res.render('errorDetails', { title: 'Detectify Error Details', errorDescription: 'Requested error details not found' });
+    return;
+  }
+
+  res.render('errorDetails', {
+    title: 'Detectify Error Details',
+    errorDescription: error.description,
+    createdAt: error.scan_profile_created_at,
+    appName: error.app_name,
+    releaseID: error.release,
+    scanStatus: error.scan_status,
+    appURL: `${process.env.AKKERIS_UI}/apps/${error.app_name}`,
+    releaseURL: `${process.env.AKKERIS_UI}/apps/${error.app_name}/releases`,
+  });
 }
 
 /**
