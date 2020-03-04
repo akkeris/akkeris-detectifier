@@ -245,7 +245,7 @@ async function renderDetails(req, res) {
     releaseURL: `${process.env.AKKERIS_UI}/apps/${profile.app_name}/releases`,
     releaseID: profile.release,
     reportFilename: profile.report_filename,
-    createdAt: new Date(profile.created_at).toLocaleString(),
+    createdAt: profile.created_at,
     favicon,
     scanStatus: profile.scan_status,
   });
