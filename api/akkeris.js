@@ -20,7 +20,7 @@ async function createReleaseStatus(token, appname, releaseID, state, description
     context: 'security/detectify',
     name: 'Detectify',
     description,
-    image_url: state === 'pending' ? `${CALLBACK_URL}/pending.png` : undefined,
+    image_url: state === 'pending' ? `${CALLBACK_URL}/pending_sm.png` : undefined,
   }, config);
 }
 
@@ -55,7 +55,7 @@ async function updateReleaseStatusWithError(token, appname, releaseID, statusID,
     name: 'Detectify',
     description: `Scan failed - ${errorType}`,
     target_url: `${CALLBACK_URL}/errors/${errorID}`,
-    image_url: `${CALLBACK_URL}/failure.png`,
+    image_url: `${CALLBACK_URL}/failure_sm.png`,
   }, config);
 }
 
