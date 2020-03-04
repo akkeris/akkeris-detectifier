@@ -13,6 +13,7 @@ async function reportError(akkerisToken, payload, releaseStatusID, scanProfileID
   try {
     const errorUUID = uuid();
     await db.storeError(errorUUID, errMsg, payload.release.id, scanProfileID);
+    await db.updateScanProfileStatus(scanProfileID, 'error');
     await akkeris.updateReleaseStatusWithError(akkerisToken, payload.key, payload.release.id, releaseStatusID, errorUUID, errType);
   } catch (error) {
     console.log(`Unable to report error to Akkeris: ${error.message}`);
