@@ -180,6 +180,24 @@ async function getRunningScans() {
   return query(queryStatement);
 }
 
+async function getAllScans() {
+  const queryStatement = `
+    select
+      scan_profiles.scan_profile,
+      scan_profiles.name,
+      scan_profiles.endpoint,
+      scan_profiles.scan_status,
+      scan_profiles.created_at,
+      releases.release,
+      releases.app_name,
+      releases.status_id
+    from scan_profiles
+      inner join releases on releases.release = scan_profiles.release
+    order by
+      scan_profiles.created_at desc;
+  `;
+  return query(queryStatement);
+}
 
 module.exports = {
   storeRelease,
@@ -194,4 +212,5 @@ module.exports = {
   getPendingProfiles,
   getScanProfile,
   getRunningScans,
+  getAllScans,
 };

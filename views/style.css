@@ -150,3 +150,18 @@ a {
 	background-color: #0062cc;
 	border-color: #005cbf;
 }
+
+.scan-item {
+  padding-right: 2rem;
+}
+
+.scan-item a {
+  text-decoration: none;
+  color: black;
+}
+
+.scan-container {
+  display: flex;
+  flex-direction: row;
+  padding-top: 1rem;
+}

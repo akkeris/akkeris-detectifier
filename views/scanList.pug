@@ -2,12 +2,12 @@ html
   head
     title Akkeris Detectifier
     style
-      include runningScans.css
+      include style.css
   body
     div(class='header text-center')
       h1 Akkeris Detectifier
     div(class='container')
-      h3 Running Scans
+      h3= listType
       div(class='scan-container')
         div(class='scan-item')
           h4 App Name
@@ -24,6 +24,10 @@ html
           each scan in scans
             p= new Date(scan.created_at).toLocaleString()
         div(class='scan-item')
-          h4 Current Status
+          h4 Updated At
+          each scan in scans
+            p= new Date(scan.updated_at).toLocaleString()
+        div(class='scan-item')
+          h4 Status
           each scan in scans
             p #{scan.scan_status}

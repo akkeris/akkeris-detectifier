@@ -241,7 +241,7 @@ async function renderDetails(req, res) {
   });
 }
 
-async function renderScans(req, res) {
+async function renderCurrentScans(req, res) {
   let pendingScans;
   try {
     pendingScans = await db.getRunningScans();
@@ -253,8 +253,28 @@ async function renderScans(req, res) {
 
   pendingScans.sort((a, b) => b.created_at - a.created_at);
 
-  res.render('runningScans', {
+  res.render('scanList', {
+    listType: 'Running Scans',
     scans: pendingScans,
+    uiEndpoint: process.env.AKKERIS_UI,
+  });
+}
+
+async function renderAllScans(req, res) {
+  let scans;
+  try {
+    scans = await db.getAllScans();
+  } catch (err) {
+    console.log(err);
+    res.sendStatus(500);
+    return;
+  }
+
+  scans.sort((a, b) => b.created_at - a.created_at);
+
+  res.render('scanList', {
+    listType: 'All Scans',
+    scans,
     uiEndpoint: process.env.AKKERIS_UI,
   });
 }
@@ -279,6 +299,7 @@ module.exports = {
   getReport,
   renderError,
   renderDetails,
-  renderScans,
+  renderCurrentScans,
+  renderAllScans,
   getScans,
 };

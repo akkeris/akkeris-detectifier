@@ -5,9 +5,10 @@ html
     meta(name='report-filename' content= reportFilename)
     script(src='/reportDetails.js')
     script(src='/json-formatter.umd.js')
-    link(rel="stylesheet", href="/reportDetails.css")
     link(rel="stylesheet", href="/loadAwesomePacman.css")
     link(rel='shortcut icon', type='image/png', href= favicon)
+    style
+      include style.css
   body
     div(class='header text-center')
       h1 Akkeris Detectifier

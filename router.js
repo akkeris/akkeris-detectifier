@@ -35,7 +35,8 @@ app.get('/errors/:errorID', controller.renderError);
 app.get('/reports/:profileID', controller.renderDetails);
 
 // Endpoint to give the user more detailed information on currently running scans
-app.get('/', controller.renderScans);
+app.get('/', controller.renderCurrentScans);
+app.get('/all', controller.renderAllScans);
 
 app.use(express.static('public'));
 
