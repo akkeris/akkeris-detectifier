@@ -1,4 +1,4 @@
-/* This is basically just copying some simple Bootstrap styles */
+/* Most of this is basically just copying some simple Bootstrap styles */
 body {
   font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
   font-size: 1rem;
@@ -164,4 +164,9 @@ a {
   display: flex;
   flex-direction: row;
   padding-top: 1rem;
+  padding-bottom: 2rem;
+}
+
+.underline {
+  text-decoration: underline !important;
 }

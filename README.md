@@ -93,8 +93,10 @@ Get the full scan report from Detectify as a JSON. Please note that this will no
 
 Incoming Webhook - /v1/hook/released
 
+## Credits
 
+json-formatter-js: https://github.com/mohsen1/json-formatter-js
+- `/public/json-formatter.umd.js`
 
-
-
-
+Load Awesome: https://github.com/danielcardoso/load-awesome
+- `/public/loadAwesomePacman.css`

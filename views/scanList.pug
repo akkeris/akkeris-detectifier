@@ -2,7 +2,8 @@ html
   head
     title Akkeris Detectifier
     style
-      include style.css
+      include styles.css
+    script(src='/processDate.js')
   body
     div(class='header text-center')
       h1 Akkeris Detectifier
@@ -22,12 +23,23 @@ html
         div(class='scan-item')
           h4 Started At
           each scan in scans
-            p= new Date(scan.created_at).toLocaleString()
+            p(class='date-item')= scan.created_at
         div(class='scan-item')
           h4 Updated At
           each scan in scans
-            p= new Date(scan.updated_at).toLocaleString()
+            p(class='date-item')= scan.updated_at
         div(class='scan-item')
           h4 Status
           each scan in scans
             p #{scan.scan_status}
+        div(class='scan-item')
+          h4 Details
+          each scan in scans
+            if scan.error && scan.error !== ''
+              p
+                a(class='underline' href=`/errors/${scan.error}`) Error Details
+            else if scan.scan_status === 'success'
+              p
+                a(class='underline' href=`/reports/${scan.scan_profile}`) Scan Details
+            else
+              p &nbsp;

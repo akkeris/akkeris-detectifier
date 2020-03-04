@@ -161,6 +161,7 @@ async function getRunningScans() {
         scan_profiles.endpoint,
         scan_profiles.scan_status,
         scan_profiles.created_at,
+        scan_profiles.updated_at,
         releases.release,
         releases.app_name,
         releases.status_id
@@ -188,11 +189,14 @@ async function getAllScans() {
       scan_profiles.endpoint,
       scan_profiles.scan_status,
       scan_profiles.created_at,
+      scan_profiles.updated_at,
       releases.release,
       releases.app_name,
-      releases.status_id
+      releases.status_id,
+      errors.error
     from scan_profiles
-      inner join releases on releases.release = scan_profiles.release
+      inner join releases on scan_profiles.release = releases.release
+      left join errors on scan_profiles.scan_profile = errors.scan_profile
     order by
       scan_profiles.created_at desc;
   `;
