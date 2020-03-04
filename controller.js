@@ -264,7 +264,7 @@ async function renderCurrentScans(req, res) {
   pendingScans.sort((a, b) => b.created_at - a.created_at);
 
   res.render('scanList', {
-    listType: 'Running Scans',
+    listType: 'running',
     scans: pendingScans,
     uiEndpoint: process.env.AKKERIS_UI,
   });
@@ -283,7 +283,7 @@ async function renderAllScans(req, res) {
   scans.sort((a, b) => b.created_at - a.created_at);
 
   res.render('scanList', {
-    listType: 'All Scans',
+    listType: 'all',
     scans,
     uiEndpoint: process.env.AKKERIS_UI,
   });

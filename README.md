@@ -91,7 +91,9 @@ Get the full scan report from Detectify as a JSON. Please note that this will no
 
 ### Incoming Webhook
 
-Incoming Webhook - /v1/hook/released
+`/v1/hook/released`
+
+Send Akkeris 'released' webhooks to this endpoint to kick off Detectify scans.
 
 ## Credits
 

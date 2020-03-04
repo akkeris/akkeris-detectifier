@@ -69,7 +69,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .header {
-  padding: 2rem 1rem;
+  padding: 2rem 1rem 1rem;
   margin-bottom: 2rem;
   background-color: #e9ecef;
   border-radius: .3rem;
@@ -81,7 +81,7 @@ h1, h2, h3, h4, h5, h6 {
 
 @media screen and (min-width: 576px) {
   .header {
-    padding: 4rem 2rem;
+    padding: 4rem 2rem 1rem;
   }
 }
 
@@ -169,4 +169,13 @@ a {
 
 .underline {
   text-decoration: underline !important;
+}
+
+.nav {
+  display: flex;
+  flex-direction: row;
+  width: 400px;
+  margin: 0 auto;
+  justify-content: space-evenly; 
+  padding-top: 2rem;
 }

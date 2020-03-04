@@ -7,8 +7,17 @@ html
   body
     div(class='header text-center')
       h1 Akkeris Detectifier
+      div(class='nav')
+        if listType === 'running'
+          a(href='/all')
+            h4 All Scans
+          h4 Running Scans
+        else if listType === 'all'
+          h4 All Scans
+          a(href='/')
+            h4 Running Scans
     div(class='container')
-      h3= listType
+      h3= listType === 'running' ? 'Running Scans' : 'All Scans'
       div(class='scan-container')
         div(class='scan-item')
           h4 App Name
