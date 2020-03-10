@@ -35,11 +35,18 @@ html
         div(class='details-item')
           h4 Scan Status
           p #{scanStatus}
+      div(class='details-container')
+        div(class='details-item')
+          h4 Score
+          p(id='cvss') ---
+        div(class='details-item')
+          h4 Number of Findings
+          p(id='num-findings') ---
       div(class='report-container')
         h4 Full Report
         if reportFilename && reportFilename !== ''
           div(class='button-container')
-            button(id='download-button', class='btn btn-primary btn-sm', onClick='downloadReport()') Download
+            button(id='download-button', class='btn btn-primary btn-sm', onClick='startDownload()') Download
             button(id='view-button', class='btn btn-primary btn-sm', onClick='render()') Toggle JSON Viewer
           div(id='json-viewer')
           div(class='la-pacman la-2x', id='pacman-loader')

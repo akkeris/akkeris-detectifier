@@ -1,8 +1,8 @@
 /* eslint-env browser  */
 
 let fullReport;
-const profileID = document.getElementsByName('profile-id')[0].content;
-const reportFilename = document.getElementsByName('report-filename')[0].content;
+let profileID;
+let reportFilename;
 
 async function fetchReport() {
   return (await fetch(`/v1/reports/${profileID}`)).json();
@@ -31,7 +31,7 @@ async function render() { // eslint-disable-line
   }
 }
 
-async function downloadReport() { // eslint-disable-line
+async function startDownload() { // eslint-disable-line
   if (!fullReport) {
     try {
       fullReport = await fetchReport();
@@ -46,3 +46,19 @@ async function downloadReport() { // eslint-disable-line
   dlAnchorElem.setAttribute('download', reportFilename);
   dlAnchorElem.click();
 }
+
+window.addEventListener('load', async () => {
+  profileID = document.getElementsByName('profile-id')[0].content;
+  reportFilename = document.getElementsByName('report-filename')[0].content;
+  if (!reportFilename) {
+    return;
+  }
+  try {
+    fullReport = await fetchReport();
+  } catch (err) {
+    console.log(err.message);
+  }
+  document.getElementById('cvss').innerHTML = fullReport.cvss;
+  document.getElementById('num-findings').innerHTML = fullReport.findings.length;
+  fullReport.findings.forEach((f) => console.log(f.tags.map((t) => t.type)));
+});
