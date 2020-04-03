@@ -5,7 +5,7 @@ const s3 = require('./api/s3');
 const port = process.env.PORT || 9000;
 
 // Check for required environment variables
-const requiredEnv = ['AKKERIS_API', 'AKKERIS_UI', 'DETECTIFY_API', 'DETECTIFY_API_KEY', 'DATABASE_URL'];
+const requiredEnv = ['AKKERIS_APP_CONTROLLER', 'AKKERIS_SERVICE_TOKEN', 'AKKERIS_UI', 'AUTH_HOST', 'DETECTIFY_API', 'DETECTIFY_API_KEY', 'DATABASE_URL'];
 const missingEnv = requiredEnv.reduce((acc, env) => {
   if (!process.env[env]) {
     acc.push(env);

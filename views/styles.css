@@ -179,3 +179,44 @@ a {
   justify-content: space-evenly; 
   padding-top: 2rem;
 }
+
+.tooltip-container {
+  position: relative;
+  width: 142px;
+  height: 70px;
+}
+
+.tooltip-title {
+  border-bottom: 1px dotted black;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  width: 220px;
+  background-color: grey;
+  opacity: 0.75;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 2;
+  bottom: 110%;
+  left: 50%;
+  margin-left: -110px;
+}
+
+.tooltip-title:hover + .tooltip-text {
+  visibility: visible;
+}
+
+.tooltip-text::after {
+  content: " ";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: grey transparent transparent transparent;
+}

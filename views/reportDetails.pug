@@ -30,14 +30,24 @@ html
             a(href=appURL, target='_blank') #{appName}
         div(class='details-item')
           h4 Akkeris Release
-          p
-            a(href=releaseURL, target='_blank') #{releaseID}
+          if !releaseID || releaseID !== ''
+            p None    
+          else
+            p
+              a(href=releaseURL, target='_blank') #{releaseID}
         div(class='details-item')
           h4 Scan Status
           p #{scanStatus}
       div(class='details-container')
+        div(class='details-item tooltip-container')
+          h4(class="tooltip-title") Success Threshold
+          span(class="tooltip-text") Maximum acceptable score
+          if !successThreshold || successThreshold === ''
+            p 6
+          else
+            p #{successThreshold}
         div(class='details-item')
-          h4 Score
+          h4 Threat Score
           p(id='cvss') ---
         div(class='details-item')
           h4 Number of Findings

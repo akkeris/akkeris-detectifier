@@ -26,8 +26,11 @@ html
             a(href=appURL, target='_blank') #{appName}
         div(class='details-item')
           h4 Akkeris Release
-          p
-            a(href=releaseURL, target='_blank') #{releaseID}
+          if !releaseID || releaseID !== ''
+            p None    
+          else
+            p
+              a(href=releaseURL, target='_blank') #{releaseID}
         div(class='details-item')
           h4 Scan Status
           p #{scanStatus}
