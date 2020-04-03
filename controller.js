@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { URL } = require('url');
+const url = require('url');
 const uuid = require('uuid/v4');
 const akkeris = require('./api/akkeris');
 const detectify = require('./api/detectify');
@@ -25,7 +25,7 @@ async function reportErrorToAkkeris(payload, releaseStatusID, scanProfileID, err
   }
 }
 
-async function setupDetectifyScan(url, appName) {
+async function setupDetectifyScan(webURL, appName) {
   // Get a full list of domains from Detectify
   let domains;
   let scanProfile;
@@ -37,10 +37,10 @@ async function setupDetectifyScan(url, appName) {
   }
 
   // Find the domain associated with the app URL
-  const appURL = new URL(url);
+  const appURL = new url.URL(webURL);
   const dIndex = domains.findIndex((d) => appURL.hostname.endsWith(d.name));
   if (dIndex === -1) {
-    const errMsg = `${appName} URL (${url}) base domain could not be found in the list of domains associated with the given Detectify API key`;
+    const errMsg = `${appName} URL (${webURL}) base domain could not be found in the list of domains associated with the given Detectify API key`;
     throw new Error(errMsg);
   }
 
