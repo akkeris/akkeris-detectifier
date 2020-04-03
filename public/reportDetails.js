@@ -60,5 +60,4 @@ window.addEventListener('load', async () => {
   }
   document.getElementById('cvss').innerHTML = fullReport.cvss;
   document.getElementById('num-findings').innerHTML = fullReport.findings.length;
-  fullReport.findings.forEach((f) => console.log(f.tags.map((t) => t.type)));
 });

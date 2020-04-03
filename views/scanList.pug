@@ -23,7 +23,7 @@ html
           h4 App Name
           each scan in scans
             p
-              a(href=`${uiEndpoint}/apps/${scan.app_name}/info`, target='_blank') #{scan.app_name}
+              a(href=`${uiEndpoint}/apps/${scan.akkeris_app}/info`, target='_blank') #{scan.akkeris_app}
         div(class='scan-item')
           h4 Endpoint
           each scan in scans
@@ -47,7 +47,7 @@ html
             if scan.error && scan.error !== ''
               p
                 a(class='underline' href=`/errors/${scan.error}`) Error Details
-            else if scan.scan_status === 'success'
+            else if scan.scan_status === 'success' || scan.scan_status === 'fail'
               p
                 a(class='underline' href=`/reports/${scan.scan_profile}`) Scan Details
             else

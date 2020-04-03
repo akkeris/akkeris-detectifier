@@ -17,8 +17,19 @@ const CALLBACK_URL = process.env.CALLBACK_URL ? (
   /^https?:\/\/.+$/.test(process.env.CALLBACK_URL) ? process.env.CALLBACK_URL : `https://${process.env.CALLBACK_URL}`
 ) : 'http://localhost:9000';
 
+// https://blog.detectify.com/2017/05/24/interpret-detectify-score/
+// 0-2.9: low     3-5.9: medium       6-10: high
+function getThreshold(threshold) {
+  const parsed = Number.parseFloat(threshold, 10);
+  return !Number.isNaN(parsed) ? parsed : 6;
+}
+
 // Remove profile from Detectify and mark as deleted in the database
-async function deleteProfile(profile) {
+async function deleteProfile(profile, isRelease) {
+  if (process.env.TEST_MODE) {
+    console.log('Test mode - not deleting anything');
+    return;
+  }
   try {
     await detectify.deleteScanProfile(profile.scan_profile_token);
   } catch (err) {
@@ -29,7 +40,9 @@ async function deleteProfile(profile) {
   }
   try {
     await db.deleteScanProfile(profile.scan_profile);
-    await db.deleteRelease(profile.release);
+    if (isRelease) {
+      await db.deleteRelease(profile.release);
+    }
   } catch (err) {
     console.log('ERROR: Unable to mark scan profile as deleted in the database');
     console.log(err.message);
@@ -39,17 +52,20 @@ async function deleteProfile(profile) {
 }
 
 // Update Akkeris release status with an error message
-async function reportError(profile, errorMessage, errorType) {
+async function reportError(profile, errorMessage, errorType, isRelease) {
   try {
     const errorID = uuid();
-    await db.storeError(errorID, errorMessage, profile.release, profile.scan_profile);
+    await db.storeError(errorID, errorMessage, profile.scan_profile, isRelease ? profile.release : undefined);
     await db.updateScanProfileStatus(profile.scan_profile, 'error');
-    await akkeris.updateReleaseStatusWithError(profile.token, profile.app_name, profile.release, profile.status_id, errorID, errorType);
+    if (isRelease) {
+      await akkeris.updateReleaseStatusWithError(profile.akkeris_app, profile.release, profile.status_id, errorID, errorType);
+    }
+    await akkeris.sendErrorEvent(profile.akkeris_app, errorMessage, errorID);
   } catch (err) {
     console.log(`ERROR: Unable to report "${errorType}" error to Akkeris`);
     console.log(err.message);
   }
-  await deleteProfile(profile);
+  await deleteProfile(profile, isRelease);
 }
 
 // Update profile status in the database
@@ -67,17 +83,19 @@ async function updateProfileStatus(profile, newStatus) {
 async function processScanProfile(profile) {
   const timeSince = Date.now() - (new Date(profile.created_at));
 
-  // Timeout
-  if (timeSince > (timeoutMinutes * 60 * 1000)) {
-    console.log(`Marking scan profile ${profile.name} as timeout...`);
-    await reportError(profile, timeoutMessage, 'Timeout');
-    await updateProfileStatus(profile, 'timeout');
+  const isRelease = !!profile.release;
+
+  // We've already seen this report and it didn't delete for some reason
+  if (profile.scan_status === 'success' || profile.scan_status === 'fail' || profile.scan_status === 'error') {
     await deleteProfile(profile);
     return;
   }
 
-  if (profile.scan_status === 'success' || profile.scan_status === 'fail' || profile.scan_status === 'error') {
-    await deleteProfile(profile);
+  // Timeout
+  if (timeSince > (timeoutMinutes * 60 * 1000)) {
+    console.log(`Marking scan profile ${profile.name} as timeout...`);
+    await reportError(profile, timeoutMessage, 'Timeout', isRelease);
+    await updateProfileStatus(profile, 'timeout');
     return;
   }
 
@@ -117,15 +135,20 @@ async function processScanProfile(profile) {
 
     // Report success/fail status to Akkeris
     try {
-      // https://blog.detectify.com/2017/05/24/interpret-detectify-score/
-      // 0-2.9: low     3-5.9: medium       6-10: high
-      if (fullReport.cvss < 6) {
+      const threshold = getThreshold(profile.success_threshold);
+      if (fullReport.cvss < threshold) {
         console.log(`The running scan for profile ${profile.name} was successful!`);
-        await akkeris.updateReleaseStatus(profile.token, profile.app_name, profile.release, profile.status_id, 'success', 'Detectify scan passed!', reportLink);
+        if (isRelease) {
+          await akkeris.updateReleaseStatus(profile.akkeris_app, profile.release, profile.status_id, 'success', 'Detectify scan passed!', reportLink);
+        }
+        await akkeris.sendResultEvent(profile.akkeris_app, 'success', 'Detectify scan passed!', reportLink);
         await updateProfileStatus(profile, 'success');
       } else {
         console.log(`The running scan for profile ${profile.name} was unsuccessful.`);
-        await akkeris.updateReleaseStatus(profile.token, profile.app_name, profile.release, profile.status_id, 'fail', 'Detectify scan failed', reportLink);
+        if (isRelease) {
+          await akkeris.updateReleaseStatus(profile.akkeris_app, profile.release, profile.status_id, 'fail', 'Detectify scan failed', reportLink);
+        }
+        await akkeris.sendResultEvent(profile.akkeris_app, 'fail', 'Detectify scan failed!', reportLink);
         await updateProfileStatus(profile, 'fail');
       }
     } catch (err) {
@@ -152,7 +175,9 @@ async function processScanProfile(profile) {
   if (scanStatus.state !== profile.scan_status) {
     await updateProfileStatus(profile, scanStatus.state);
     try {
-      await akkeris.updateReleaseStatus(profile.token, profile.app_name, profile.release, profile.status_id, 'pending', `Detectify scan ${scanStatus.state}`);
+      if (isRelease) {
+        await akkeris.updateReleaseStatus(profile.akkeris_app, profile.release, profile.status_id, 'pending', `Detectify scan ${scanStatus.state}`);
+      }
     } catch (err) {
       console.log('ERROR: Unable to update scan profile status in the Akkeris release');
       console.log(err.message);

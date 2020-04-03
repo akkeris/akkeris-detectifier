@@ -8,22 +8,76 @@ const db = require('./db');
 
 const isUUID = /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
 
-async function reportError(akkerisToken, payload, releaseStatusID, scanProfileID, errMsg, errType) {
+function sendJSONResponse(res, statusCode, message) {
+  res.type('application/json');
+  res.status(statusCode).send(JSON.stringify({ message }));
+}
+
+async function reportErrorToAkkeris(payload, releaseStatusID, scanProfileID, errMsg, errType) {
   console.log(errMsg);
   try {
     const errorUUID = uuid();
-    await db.storeError(errorUUID, errMsg, payload.release.id, scanProfileID);
+    await db.storeError(errorUUID, errMsg, scanProfileID, payload.release.id);
     await db.updateScanProfileStatus(scanProfileID, 'error');
-    await akkeris.updateReleaseStatusWithError(akkerisToken, payload.key, payload.release.id, releaseStatusID, errorUUID, errType);
+    await akkeris.updateReleaseStatusWithError(payload.key, payload.release.id, releaseStatusID, errorUUID, errType);
   } catch (error) {
     console.log(`Unable to report error to Akkeris: ${error.message}`);
   }
 }
 
-/**
- * Create scan profile and start detectify scan
- */
-async function setupDetectifyScan(req, res) {
+async function setupDetectifyScan(webURL, appName) {
+  // Get a full list of domains from Detectify
+  let domains;
+  let scanProfile;
+  try {
+    ({ data: domains } = await detectify.getDomains());
+  } catch (err) {
+    const errMsg = `Error getting list of domains from Detectify${err.response.data ? `: ${JSON.stringify(err.response.data)}` : ''}`;
+    throw new Error(errMsg);
+  }
+
+  // Find the domain associated with the app URL
+  const appURL = new url.URL(webURL);
+  const dIndex = domains.findIndex((d) => appURL.hostname.endsWith(d.name));
+  if (dIndex === -1) {
+    const errMsg = `${appName} URL (${webURL}) base domain could not be found in the list of domains associated with the given Detectify API key`;
+    throw new Error(errMsg);
+  }
+
+  // Create the Detectify scan profile
+  try {
+    ({ data: scanProfile } = await detectify.createScanProfile(domains[dIndex].token, appURL.hostname));
+  } catch (err) {
+    const errMsg = `Error - Could not create Detectify scan profile${err.response.data ? `: ${JSON.stringify(err.response.data)}` : ''}`;
+    throw new Error(errMsg);
+  }
+
+  return scanProfile;
+}
+
+async function startDetectifyScan(scanProfile) {
+  let scanStatus;
+
+  // Start scan on the scan profile
+  try {
+    await detectify.startScan(scanProfile.token);
+  } catch (err) {
+    const errMsg = `Error - Could not start Detectify scan on scan profile${err.response.data ? `: ${JSON.stringify(err.response.data)}` : ''}`;
+    throw new Error(errMsg);
+  }
+
+  // Get status of scan
+  try {
+    ({ data: scanStatus } = await detectify.getScanStatus(scanProfile.token));
+  } catch (err) {
+    const errMsg = `Error - Could not get Detectify scan status on scan profile${err.response.data ? `: ${JSON.stringify(err.response.data)}` : ''}`;
+    throw new Error(errMsg);
+  }
+
+  return scanStatus;
+}
+
+async function handleReleasedHook(req, res) {
   const payload = req.body;
   try {
     assert.ok((
@@ -32,6 +86,7 @@ async function setupDetectifyScan(req, res) {
       && payload.release
       && payload.release.id
       && !!req.header('x-akkeris-token')
+      && req.header('user-agent') === 'akkeris-hookshot'
     ), 'Payload did not match expected format');
   } catch (err) {
     res.status(422).send(err.message);
@@ -39,17 +94,16 @@ async function setupDetectifyScan(req, res) {
   }
   res.sendStatus(200);
 
-  const akkerisToken = req.header('x-akkeris-token');
-
   let app;
-  let domains;
   let releaseStatusID;
   let scanProfile;
   let scanStatus;
 
+  const { key: appName, release: { id: releaseID } } = payload;
+
   // Fetch app details from Akkeris so we can scan the URL with Detectify
   try {
-    ({ data: app } = await akkeris.getAppDetails(akkerisToken, payload.key));
+    ({ data: app } = await akkeris.getAppDetails(appName));
   } catch (err) {
     console.log(`Error getting app details from Akkeris: ${err.message}`);
     return;
@@ -57,67 +111,37 @@ async function setupDetectifyScan(req, res) {
 
   // Create an initial release status that we will update with further info
   try {
-    ({ data: { id: releaseStatusID } } = await akkeris.createReleaseStatus(akkerisToken, payload.key, payload.release.id, 'pending', 'Detectify scan pending creation'));
+    ({ data: { id: releaseStatusID } } = await akkeris.createReleaseStatus(appName, releaseID, 'pending', 'Detectify scan pending creation'));
   } catch (err) {
     console.log(`Error creating Akkeris release status: ${err.message}`);
     return;
   }
 
   // Store release details in the database for later use
-  await db.storeRelease(payload, releaseStatusID, akkerisToken);
+  await db.storeRelease(releaseID, appName, releaseStatusID, payload);
 
-  // Get a full list of domains from Detectify
   try {
-    ({ data: domains } = await detectify.getDomains());
+    scanProfile = await setupDetectifyScan(app.web_url, appName);
   } catch (err) {
-    const errMsg = `Error getting list of domains from Detectify${err.response.data ? `: ${JSON.stringify(err.response.data)}` : ''}`;
-    reportError(akkerisToken, payload, releaseStatusID, '', errMsg, 'Detectify Service Error');
-    return;
-  }
-
-  // Find the domain associated with the app URL
-  const appURL = new url.URL(app.web_url);
-  const dIndex = domains.findIndex((d) => appURL.hostname.endsWith(d.name));
-  if (dIndex === -1) {
-    const errMsg = `${payload.key} URL (${app.web_url}) base domain could not be found in the list of domains associated with the given Detectify API key`;
-    reportError(akkerisToken, payload, releaseStatusID, '', errMsg, 'Detectify Service Error');
-    return;
-  }
-
-  // Create the Detectify scan profile
-  try {
-    ({ data: scanProfile } = await detectify.createScanProfile(domains[dIndex].token, appURL.hostname));
-  } catch (err) {
-    const errMsg = `Error - Could not create Detectify scan profile${err.response.data ? `: ${JSON.stringify(err.response.data)}` : ''}`;
-    reportError(akkerisToken, payload, releaseStatusID, '', errMsg, 'Detectify Service Error');
+    reportErrorToAkkeris(payload, releaseStatusID, '', err.message, 'Detectify Service Error');
     return;
   }
 
   // Store scan profile in database
   const scanProfileID = uuid();
-  await db.storeScanProfile(scanProfileID, payload.release.id, scanProfile, 'profile_created');
+  scanProfile.akkeris_app = appName;
+  await db.storeScanProfile(scanProfileID, scanProfile, 'profile_created', releaseID);
 
-  // Start scan on the scan profile
   try {
-    await detectify.startScan(scanProfile.token);
+    scanStatus = await startDetectifyScan(scanProfile);
   } catch (err) {
-    const errMsg = `Error - Could not start Detectify scan on scan profile${err.response.data ? `: ${JSON.stringify(err.response.data)}` : ''}`;
-    reportError(akkerisToken, payload, releaseStatusID, scanProfileID, errMsg, 'Detectify Service Error');
-    return;
-  }
-
-  // Get status of scan
-  try {
-    ({ data: scanStatus } = await detectify.getScanStatus(scanProfile.token));
-  } catch (err) {
-    const errMsg = `Error - Could not get Detectify scan status on scan profile${err.response.data ? `: ${JSON.stringify(err.response.data)}` : ''}`;
-    reportError(akkerisToken, payload, releaseStatusID, scanProfileID, errMsg, 'Detectify Service Error');
+    reportErrorToAkkeris(payload, releaseStatusID, scanProfileID, err.message, 'Detectify Service Error');
     return;
   }
 
   // Update the release status with the state of the new test
   try {
-    await akkeris.updateReleaseStatus(akkerisToken, payload.key, payload.release.id, releaseStatusID, 'pending', `Detectify scan ${scanStatus.state}`);
+    await akkeris.updateReleaseStatus(appName, releaseID, releaseStatusID, 'pending', `Detectify scan ${scanStatus.state}`);
   } catch (err) {
     console.log(`Error updating Akkeris release status: ${err.message}`);
   }
@@ -125,7 +149,63 @@ async function setupDetectifyScan(req, res) {
   // Store scan profile status in database
   await db.updateScanProfileStatus(scanProfileID, scanStatus.state);
 
-  console.log(`Detectify scan profile "${scanProfile.name}" created for "${payload.key}" and scan started with status: "${scanStatus.state}"`);
+  console.log(`Detectify scan profile "${scanProfile.name}" created for "${appName}" and scan started with status: "${scanStatus.state}"`);
+}
+
+async function handleNewScan(req, res) {
+  const payload = req.body;
+  try {
+    assert.ok(!!payload.app_name, 'Payload did not match expected format');
+  } catch (err) {
+    sendJSONResponse(res, 422, err.message);
+    return;
+  }
+
+  const { app_name: appName, success_threshold: successThreshold } = payload;
+
+  let app;
+  let scanProfile;
+  let scanStatus;
+
+  // Fetch app details from Akkeris so we can scan the URL with Detectify
+  try {
+    ({ data: app } = await akkeris.getAppDetails(appName));
+  } catch (err) {
+    const errorMessage = `Error getting app details from Akkeris: ${err.message}`;
+    console.log(errorMessage);
+    sendJSONResponse(res, 500, errorMessage);
+    return;
+  }
+
+  try {
+    scanProfile = await setupDetectifyScan(app.web_url, appName);
+  } catch (err) {
+    const errorMessage = `Error creating scan profile: ${err.message}`;
+    console.log(errorMessage);
+    sendJSONResponse(res, 500, errorMessage);
+    return;
+  }
+
+  // Store scan profile in database
+  const scanProfileID = uuid();
+  scanProfile.akkeris_app = appName;
+  await db.storeScanProfile(scanProfileID, scanProfile, 'profile_created', undefined, successThreshold);
+
+  try {
+    scanStatus = await startDetectifyScan(scanProfile);
+  } catch (err) {
+    const errorMessage = `Error starting Detectify scan: ${err.message}`;
+    sendJSONResponse(res, 500, errorMessage);
+    console.log(errorMessage);
+    return;
+  }
+
+  // Store scan profile status in database
+  await db.updateScanProfileStatus(scanProfileID, scanStatus.state);
+
+  const result = `Detectify scan profile "${scanProfile.name}" created for "${appName}" and scan started with status: "${scanStatus.state}"`;
+  console.log(result);
+  sendJSONResponse(res, 200, result);
 }
 
 /**
@@ -150,11 +230,11 @@ async function renderError(req, res) {
     title: 'Detectify Error Details',
     errorDescription: error.description,
     createdAt: error.scan_profile_created_at,
-    appName: error.app_name,
+    appName: error.akkeris_app,
     releaseID: error.release,
     scanStatus: error.scan_status,
-    appURL: `${process.env.AKKERIS_UI}/apps/${error.app_name}`,
-    releaseURL: `${process.env.AKKERIS_UI}/apps/${error.app_name}/releases`,
+    appURL: `${process.env.AKKERIS_UI}/apps/${error.akkeris_app}`,
+    releaseURL: `${process.env.AKKERIS_UI}/apps/${error.akkeris_app}/releases`,
   });
 }
 
@@ -241,14 +321,15 @@ async function renderDetails(req, res) {
     profileID: req.params.profileID,
     profileName: profile.name,
     endpoint: profile.endpoint,
-    appName: profile.app_name,
-    appURL: `${process.env.AKKERIS_UI}/apps/${profile.app_name}`,
-    releaseURL: `${process.env.AKKERIS_UI}/apps/${profile.app_name}/releases`,
+    appName: profile.akkeris_app,
+    appURL: `${process.env.AKKERIS_UI}/apps/${profile.akkeris_app}`,
+    releaseURL: `${process.env.AKKERIS_UI}/apps/${profile.akkeris_app}/releases`,
     releaseID: profile.release,
     reportFilename: profile.report_filename,
     createdAt: profile.created_at,
     favicon,
     scanStatus: profile.scan_status,
+    successThreshold: profile.success_threshold,
   });
 }
 
@@ -305,7 +386,6 @@ async function getScans(req, res) {
 }
 
 module.exports = {
-  setupDetectifyScan,
   getProfile,
   getReport,
   renderError,
@@ -313,4 +393,6 @@ module.exports = {
   renderCurrentScans,
   renderAllScans,
   getScans,
+  handleReleasedHook,
+  handleNewScan,
 };

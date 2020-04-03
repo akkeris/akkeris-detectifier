@@ -4,29 +4,28 @@ const CALLBACK_URL = process.env.CALLBACK_URL ? (
   /^https?:\/\/.+$/.test(process.env.CALLBACK_URL) ? process.env.CALLBACK_URL : `https://${process.env.CALLBACK_URL}`
 ) : 'http://localhost:9000';
 
-const akkerisAPI = process.env.AKKERIS_API;
+const controllerAPI = process.env.AKKERIS_APP_CONTROLLER;
+const serviceToken = process.env.AKKERIS_SERVICE_TOKEN;
 
-const getAkkerisAuthConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
+const akkerisAuthConfig = { headers: { Authorization: `Bearer ${serviceToken}` } };
 
-async function getAppDetails(token, appname) {
-  return axios.get(`${akkerisAPI}/apps/${appname}`, getAkkerisAuthConfig(token));
+async function getAppDetails(appname) {
+  return axios.get(`${controllerAPI}/apps/${appname}`, akkerisAuthConfig);
 }
 
-async function createReleaseStatus(token, appname, releaseID, state, description) {
-  const config = getAkkerisAuthConfig(token);
-  config.headers['Content-Type'] = 'application/json';
-  return axios.post(`${akkerisAPI}/apps/${appname}/releases/${releaseID}/statuses`, {
+async function createReleaseStatus(appname, releaseID, state, description) {
+  akkerisAuthConfig.headers['Content-Type'] = 'application/json';
+  return axios.post(`${controllerAPI}/apps/${appname}/releases/${releaseID}/statuses`, {
     state,
     context: 'security/detectify',
     name: 'Detectify',
     description,
     image_url: state === 'pending' ? `${CALLBACK_URL}/pending_sm.png` : undefined,
-  }, config);
+  }, akkerisAuthConfig);
 }
 
-async function updateReleaseStatus(token, appname, releaseID, statusID, state, description, targetURL) {
-  const config = getAkkerisAuthConfig(token);
-  config.headers['Content-Type'] = 'application/json';
+async function updateReleaseStatus(appname, releaseID, statusID, state, description, targetURL) {
+  akkerisAuthConfig.headers['Content-Type'] = 'application/json';
   let img;
   switch (state) {
     case 'success':
@@ -38,25 +37,46 @@ async function updateReleaseStatus(token, appname, releaseID, statusID, state, d
     default:
       img = 'pending_sm.png';
   }
-  return axios.patch(`${akkerisAPI}/apps/${appname}/releases/${releaseID}/statuses/${statusID}`, {
+  return axios.patch(`${controllerAPI}/apps/${appname}/releases/${releaseID}/statuses/${statusID}`, {
     state,
     name: 'Detectify',
     description,
     image_url: `${CALLBACK_URL}/${img}`,
     target_url: targetURL || undefined,
-  }, config);
+  }, akkerisAuthConfig);
 }
 
-async function updateReleaseStatusWithError(token, appname, releaseID, statusID, errorID, errorType) {
-  const config = getAkkerisAuthConfig(token);
-  config.headers['Content-Type'] = 'application/json';
-  return axios.patch(`${akkerisAPI}/apps/${appname}/releases/${releaseID}/statuses/${statusID}`, {
+async function updateReleaseStatusWithError(appname, releaseID, statusID, errorID, errorType) {
+  akkerisAuthConfig.headers['Content-Type'] = 'application/json';
+  return axios.patch(`${controllerAPI}/apps/${appname}/releases/${releaseID}/statuses/${statusID}`, {
     state: 'error',
     name: 'Detectify',
     description: `Scan failed - ${errorType}`,
     target_url: `${CALLBACK_URL}/errors/${errorID}`,
     image_url: `${CALLBACK_URL}/failure_sm.png`,
-  }, config);
+  }, akkerisAuthConfig);
+}
+
+async function sendErrorEvent(appName, message, errorID) {
+  return axios.post(`${controllerAPI}/events`, {
+    action: 'security_scan',
+    key: appName,
+    status: 'error',
+    service_name: 'detectify',
+    message,
+    link: `${CALLBACK_URL}/errors/${errorID}`,
+  }, akkerisAuthConfig);
+}
+
+async function sendResultEvent(appName, status, message, link) {
+  return axios.post(`${controllerAPI}/events`, {
+    action: 'security_scan',
+    key: appName,
+    status,
+    service_name: 'detectify',
+    message,
+    link,
+  }, akkerisAuthConfig);
 }
 
 module.exports = {
@@ -64,4 +84,6 @@ module.exports = {
   updateReleaseStatus,
   getAppDetails,
   updateReleaseStatusWithError,
+  sendErrorEvent,
+  sendResultEvent,
 };
