@@ -1,9 +1,11 @@
+- const truncate = function (s){return s.length > 32 ? `${s.slice(0, 32)}...` : s;}
 html
   head
     title Akkeris Detectifier
     style
       include styles.css
     script(src='/processDate.js')
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js')
   body
     div(class='header text-center')
       h1 Akkeris Detectifier
@@ -17,38 +19,30 @@ html
           a(href='/')
             h4 Running Scans
     div(class='container')
-      h3= listType === 'running' ? 'Running Scans' : 'All Scans'
-      div(class='scan-container')
-        div(class='scan-item')
-          h4 App Name
+      h3(class='scan-list-title')= listType === 'running' ? 'Running Scans' : 'All Scans'
+      table(class='scan-items')
+        thead
+          tr
+            th App Name
+            th Endpoint
+            th Started At
+            th Updated At
+            th Status
+            th Details
+        tbody
           each scan in scans
-            p
-              a(href=`${uiEndpoint}/apps/${scan.akkeris_app}/info`, target='_blank') #{scan.akkeris_app}
-        div(class='scan-item')
-          h4 Endpoint
-          each scan in scans
-            p 
-              a(href=`https://${scan.endpoint}`, target='_blank') #{scan.endpoint}
-        div(class='scan-item')
-          h4 Started At
-          each scan in scans
-            p(class='date-item')= scan.created_at
-        div(class='scan-item')
-          h4 Updated At
-          each scan in scans
-            p(class='date-item')= scan.updated_at
-        div(class='scan-item')
-          h4 Status
-          each scan in scans
-            p #{scan.scan_status}
-        div(class='scan-item')
-          h4 Details
-          each scan in scans
-            if scan.error && scan.error !== ''
-              p
-                a(class='underline' href=`/errors/${scan.error}`) Error Details
-            else if scan.scan_status === 'success' || scan.scan_status === 'fail'
-              p
-                a(class='underline' href=`/reports/${scan.scan_profile}`) Scan Details
-            else
-              p &nbsp;
+            tr
+              td
+                a(href=`${uiEndpoint}/apps/${scan.akkeris_app}/info`, target='_blank') #{scan.akkeris_app}
+              td
+                a(href=`https://${scan.endpoint}`, target='_blank')= truncate(scan.endpoint)
+              td(class='date-item')= scan.created_at
+              td(class='date-item')= scan.updated_at
+              td #{scan.scan_status}
+              td
+                if scan.error && scan.error !== ''
+                  a(class='underline' href=`/errors/${scan.error}`)
+                    img(class='details-img' src='/error-details.png' title='Error Details' alt='Error Details')
+                else if scan.scan_status === 'success' || scan.scan_status === 'fail'
+                  a(class='underline' href=`/reports/${scan.scan_profile}`)
+                    img(class='details-img' src='/scan-details.png' title='Scan Details' alt='Scan Details')
