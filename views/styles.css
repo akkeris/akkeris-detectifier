@@ -76,7 +76,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .container {
-  margin: auto 12vw;
+  margin: auto 6vw 12vw;
 }
 
 @media screen and (min-width: 576px) {
@@ -160,6 +160,10 @@ a {
   color: black;
 }
 
+.scan-items {
+  width: 100%;
+}
+
 .scan-container {
   display: flex;
   flex-direction: row;
@@ -219,4 +223,37 @@ a {
   border-width: 5px;
   border-style: solid;
   border-color: grey transparent transparent transparent;
+}
+
+.scan-list-title {
+  margin-bottom: 2rem;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+}
+
+td {
+  height: 58px;
+}
+
+td, th {
+  padding: 0.75rem 0.25rem;
+}
+
+table thead th {
+  border-bottom: 2px solid #dee2e6;
+  vertical-align: bottom;
+}
+
+table td, table th {
+  border-top: 1px solid #dee2e6;
+}
+
+.details-img {
+  width: 32px;
 }
