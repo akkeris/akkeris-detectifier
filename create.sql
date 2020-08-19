@@ -36,6 +36,11 @@ create table if not exists errors (
   created_at timestamptz not null default now()
 );
 
+create table if not exists sites (
+  akkeris_app text not null primary key,
+  site text not null
+);
+
 -- Changed release column to be optional
 alter table scan_profiles alter column release drop not null;
 

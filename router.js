@@ -41,6 +41,16 @@ app.use(bodyParser.json());
 // Endpoint for Akkeris "released" events
 app.post('/v1/hook/released', controller.handleReleasedHook);
 
+// Endpoints to set/update config (site to scan) for an app
+app.post('/v1/config/:appName', controller.setOrUpdateConfig);
+app.patch('/v1/config/:appName', controller.setOrUpdateConfig);
+
+// Endpoint to remove config (site to scan) for an app
+app.delete('/v1/config/:appName', controller.deleteConfig);
+
+// Endpoint to list all configs for apps
+app.get('/v1/config', controller.listConfig);
+
 // Endpoint to kick off a new scan
 app.post('/v1/scans/start', controller.handleNewScan);
 
