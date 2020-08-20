@@ -120,8 +120,20 @@ async function handleReleasedHook(req, res) {
   // Store release details in the database for later use
   await db.storeRelease(releaseID, appName, releaseStatusID, payload);
 
+  let webURL = '';
+
+  // Get configured site (if any) for the app
+  const appSite = await db.getSiteForApp(appName);
+
+  // If there is a configured site, use the site rather than the app's endpoint
+  webURL = appSite.length === 1 ? appSite[0].site : app.web_url;
+
+  if (!(webURL.startsWith('http://') || webURL.startsWith('https://'))) {
+    webURL = `https://${webURL}`;
+  }
+
   try {
-    scanProfile = await setupDetectifyScan(app.web_url, appName);
+    scanProfile = await setupDetectifyScan(webURL, appName);
   } catch (err) {
     reportErrorToAkkeris(payload, releaseStatusID, '', err.message, 'Detectify Service Error');
     return;
@@ -177,8 +189,25 @@ async function handleNewScan(req, res) {
     return;
   }
 
+  let webURL = '';
+
+  // If site was passed in as a parameter, scan the site instead
+  if (payload.site && payload.site.length > 0) {
+    webURL = payload.site;
+  } else {
+    // Get configured site (if any) for the app
+    const appSite = await db.getSiteForApp(appName);
+
+    // If there is a configured site, use the site rather than the app's endpoint
+    webURL = appSite.length === 1 ? appSite[0].site : app.web_url;
+  }
+
+  if (!(webURL.startsWith('http://') || webURL.startsWith('https://'))) {
+    webURL = `https://${webURL}`;
+  }
+
   try {
-    scanProfile = await setupDetectifyScan(app.web_url, appName);
+    scanProfile = await setupDetectifyScan(webURL, appName);
   } catch (err) {
     const errorMessage = `Error creating scan profile: ${err.message}`;
     console.log(errorMessage);
@@ -385,6 +414,73 @@ async function getScans(req, res) {
   res.status(200).send(pendingScans);
 }
 
+async function setOrUpdateConfig(req, res) {
+  const payload = req.body;
+
+  // Need to have an app name
+  if (!req.params.appName) {
+    res.sendStatus(404);
+    return;
+  }
+
+  // Need to have some config to set
+  if (!payload.site || payload.site === '') {
+    res.sendStatus(400);
+    return;
+  }
+
+  const siteURL = (
+    payload.site.startsWith('https://') || payload.site.startsWith('http://')
+  ) ? payload.site : `https://${payload.site}`;
+
+  let site;
+
+  try {
+    site = await db.getSiteForApp(req.params.appName);
+    if (site.length > 0) {
+      await db.updateSite(req.params.appName, siteURL);
+    } else {
+      await db.storeSite(req.params.appName, siteURL);
+    }
+    site = await db.getSiteForApp(req.params.appName);
+  } catch (err) {
+    const errorMessage = `Error storing site in database: ${err.message}`;
+    sendJSONResponse(res, 500, errorMessage);
+    return;
+  }
+
+  res.status(200).send(JSON.stringify(site));
+}
+
+async function deleteConfig(req, res) {
+  // Need to have an app name
+  if (!req.params.appName) {
+    res.sendStatus(404);
+    return;
+  }
+
+  try {
+    await db.deleteSite(req.params.appName);
+  } catch (err) {
+    const errorMessage = `Error deleting config: ${err.message}`;
+    sendJSONResponse(res, 500, errorMessage);
+    return;
+  }
+
+  res.status(200).send();
+}
+
+async function listConfig(req, res) {
+  try {
+    const sites = await db.getAllSites();
+    res.type('application/json');
+    res.status(200).send(JSON.stringify(sites));
+  } catch (err) {
+    const errorMessage = `Error retrieving config: ${err.message}`;
+    sendJSONResponse(res, 500, errorMessage);
+  }
+}
+
 module.exports = {
   getProfile,
   getReport,
@@ -395,4 +491,7 @@ module.exports = {
   getScans,
   handleReleasedHook,
   handleNewScan,
+  setOrUpdateConfig,
+  deleteConfig,
+  listConfig,
 };

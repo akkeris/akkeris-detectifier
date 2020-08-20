@@ -248,6 +248,31 @@ async function getAllScans() {
   return query(queryStatement);
 }
 
+async function getSiteForApp(appName) {
+  const queryStatement = 'select site from sites where akkeris_app = $1';
+  return query(queryStatement, appName);
+}
+
+
+async function getAllSites() {
+  return query('select * from sites');
+}
+
+async function deleteSite(appName) {
+  const queryStatement = 'delete from sites where akkeris_app = $1';
+  return query(queryStatement, appName);
+}
+
+async function storeSite(appName, site) {
+  const queryStatement = 'insert into sites(akkeris_app, site) values($1, $2)';
+  return query(queryStatement, appName, site);
+}
+
+async function updateSite(appName, site) {
+  const queryStatement = 'update sites set site = $1 where akkeris_app = $2';
+  return query(queryStatement, site, appName);
+}
+
 module.exports = {
   storeRelease,
   deleteRelease,
@@ -262,4 +287,9 @@ module.exports = {
   getScanProfile,
   getRunningScans,
   getAllScans,
+  getSiteForApp,
+  getAllSites,
+  deleteSite,
+  storeSite,
+  updateSite,
 };

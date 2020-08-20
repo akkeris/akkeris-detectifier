@@ -64,6 +64,7 @@ Required Headers:
 Expected Payload (JSON):
 - "app_name" (string): Provide the name of the Akkeris app that you want to be scanned
 - "success_threshold" (string) (optional): Provide this to customize the maximum allowable threat score for a scan to be considered "successful" (default 6)
+- "site" (string) (optional): Provide this to scan a different URL than the default app endpoint
 
 Example payload:
 ```json
@@ -78,6 +79,39 @@ Example payload:
 `POST /v1/hook/released`
 
 Point your Akkeris `released` webhook on an app to this endpoint to initiate scans.
+
+### Site Overrides
+
+Sometimes it is neccesary to scan a different URL than the default app endpoint. Adding a site override for an app means that any time a scan is run on the given app, it will use the site override URL instead of the default app endpoint.
+
+Currently you can only have a single site override per app. This may change in the future (i.e. scan multiple endpoints when an app is released)
+
+#### View All Site Overrides
+
+`GET /v1/config`
+
+This endpoint returns a list of all apps that have configured site overrides.
+
+#### Add New or Update Site Override
+
+`POST /v1/config/:appName`
+
+or
+
+`PATCH /v1/config/:appName`
+
+Add a new site override for an app, or update an existing site override for an app. Either endpoint works for either function.
+
+Expected Payload (JSON):
+- `site` (string) (required): The URL to scan instead of the default app endpoint
+
+
+#### Remove Site Override
+
+`DELETE /v1/config/:appName`
+
+This will remove the configured site override for an app.
+
 
 ### Web Pages
 
