@@ -1,5 +1,5 @@
 {
-  "name": "akkeris-detectify",
+  "name": "akkeris-detectifier",
   "version": "1.0.0",
   "description": "Scan Akkeris apps with Detectify and report release statuses",
   "main": "index.js",
@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "repository": "https://github.com/octanner/akkeris-detectify",
+  "repository": "https://github.com/akkeris/akkeris-detectifier",
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.612.0",
